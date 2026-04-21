@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Note de Dimensionnement Interstoves</title>
+    <style>
+        :root {
+            --stove-red: #c0392b; 
+            --stove-dark: #2c3e50;
+            --stove-light: #f4f4f4;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--stove-light); padding: 20px; color: #333; line-height: 1.5; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid var(--stove-red); padding-bottom: 20px; }
+        .logo-stove { max-width: 250px; height: auto; margin-bottom: 10px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 20px; }
+        .col { padding: 20px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; }
+        /* Colonne large pour les infos client */
+        .col-full { grid-column: span 2; background: #fdfdfd; border: 1px solid var(--stove-red); }
+        
+        h3 { color: var(--stove-dark); border-left: 4px solid var(--stove-red); padding-left: 12px; margin-bottom: 15px; font-size: 1.1em; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85em; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 1em; font-family: inherit; }
+
+        .result-box { background: var(--stove-dark); color: white; padding: 25px; text-align: center; border-radius: 8px; margin-top: 20px; }
+        .result-main { font-size: 2.2em; font-weight: bold; color: #f1c40f; }
+
+        .simulation-annuelle { margin-top: 25px; padding: 20px; background: #fff5f5; border-radius: 8px; border: 1px solid var(--stove-red); }
+        .highlight-annuel { font-size: 1.8em; color: var(--stove-red); font-weight: bold; }
+        
+        .info-bulle { font-size: 0.85em; color: #666; background: #eee; padding: 10px; border-radius: 4px; margin-top: 10px; display: block; }
+        .note-juridique { font-size: 0.82em; color: #7f8c8d; font-style: italic; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd; }
+
+        .btn-print { width:100%; padding:15px; background:var(--stove-red); color:white; border:none; border-radius:5px; margin-top:20px; cursor:pointer; font-weight:bold; font-size: 1.1em; transition: 0.3s; }
+        .btn-print:hover { background: #a93226; }
+
+        @media print {
+            .btn-print { display: none; }
+            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0; }
+            body { background: white; padding: 0; }
+            .col { border: 1px solid #eee; }
+            .col-full { border: 1px solid var(--stove-red); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <img src="https://www.interstoves.fr/img/logo-1767943104.jpg" alt="Logo Interstoves" class="logo-stove">
+        <h1>Note de Dimensionnement & Étude Thermique</h1>
+    </div>
+
+    <div class="grid">
+        <div class="col col-full">
+            <h3>Informations Dossier Client</h3>
+            <div style="display: flex; gap: 20px;">
+                <div style="flex: 1;">
+                    <label>Nom du Client</label>
+                    <input type="text" id="nomClient" placeholder="Ex: M. Martin Jean">
+                </div>
+                <div style="flex: 2;">
+                    <label>Adresse du chantier</label>
+                    <input type="text" id="adresseClient" placeholder="Ex: 12 rue des lilas, 69000 Lyon">
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <h3>1. Caractéristiques Logement</h3>
+            <label>Surface habitable (m²)</label>
+            <input type="number" id="surface" value="100" oninput="calculerGlobal()">
+            
+            <label>Hauteur sous plafond (m)</label>
+            <input type="number" id="hsp" value="2.5" step="0.1" oninput="calculerGlobal()">
+
+            <label>Niveau d'isolation (Coefficient G)</label>
+            <select id="coeffG" onchange="calculerGlobal()">
+                <option value="0.4">0.4 - RE2020 / Maison Passive</option>
+                <option value="0.6">0.6 - RT2012 / Très isolé</option>
+                <option value="0.8">0.8 - RT2005 / RT2000 (Isolé)</option>
+                <option value="1.2" selected>1.2 - Années 90 / Moyen</option>
+                <option value="1.5">1.5 - Années 80 (Peu isolé)</option>
+                <option value="1.9">1.9 - Ancien (Non isolé)</option>
+            </select>
+        </div>
+
+        <div class="col">
+            <h3>2. Localisation & Climat</h3>
+            <label>Département / Zone</label>
+            <select id="departement" onchange="calculerGlobal()"></select>
+            
+            <label>Altitude du chantier</label>
+            <select id="altitude" onchange="calculerGlobal()">
+                <option value="0">0 - 200 m</option>
+                <option value="400">400 m</option>
+                <option value="600">600 m</option>
+                <option value="800">800 m</option>
+                <option value="1000">1000 m</option>
+                <option value="1200">1200 m</option>
+                <option value="1400">1400 m</option>
+                <option value="1600">1600 m</option>
+                <option value="1800">1800 m</option>
+                <option value="2000">2000 m</option>
+            </select>
+
+            <label>Température intérieure souhaitée (°C)</label>
+            <input type="number" id="tInt" value="20" oninput="calculerGlobal()">
+            
+            <span class="info-bulle">
+                Données : T° Ext base <b id="displayTextBase">-</b>°C | T° Corrigée <b id="tExtCorrigee">-</b>°C | DJU <b id="displayDJU">-</b>
+            </span>
+        </div>
+    </div>
+
+    <div class="result-box">
+        Puissance de déperdition calculée : <span class="result-main" id="puissanceWatts">0</span> Watts
+        <div style="font-size: 1.1em; opacity: 0.9; margin-top: 10px;">
+            Préconisation Puissance Nominale : <span id="puissanceKw" style="font-weight: bold;">0</span> kW
+        </div>
+    </div>
+
+    <div class="simulation-annuelle">
+        <h3>Besoin Énergétique Annuel Estimé</h3>
+        <p>Énergie totale à fournir pour le chauffage sur une saison complète :</p>
+        <span class="highlight-annuel" id="besoinAnnuel">0</span> <span class="highlight-annuel"> kWh / an</span>
+        
+        <p class="note-juridique">
+            <b>Note technique :</b> Ce calcul simule un maintien constant de la température. 
+            La correction d'altitude applique les paliers officiels : -1°C/100m (jusqu'à 600m), -1.5°C/100m (jusqu'à 1000m) et -2°C/100m au-delà.
+        </p>
+    </div>
+
+    <button class="btn-print" onclick="window.print()">Imprimer le Dossier Technique</button>
+</div>
+
+<script>
+    const dataClimat = {
+        "01": ["Ain", -4, 2600], "02": ["Aisne", -7, 2750], "03": ["Allier", -7, 2550], "04": ["Alpes-H-P", -8, 2400], "05": ["Hautes-Alpes", -8, 3000],
+        "06L": ["06 - Alpes-Marit. (Littoral)", -2, 1350], "06I": ["06 - Alpes-Marit. (Intérieur)", -5, 1850],
+        "07": ["Ardèche", -7, 2200], "08": ["Ardennes", -8, 2900], "09": ["Ariège", -6, 2300], "10": ["Aube", -7, 2650],
+        "11L": ["11 - Aude (Littoral)", -2, 1500], "11I": ["11 - Aude (Intérieur)", -5, 1800],
+        "12": ["Aveyron", -8, 2600],
+        "13L": ["13 - Bouches-du-R. (Littoral)", -2, 1450], "13I": ["13 - Bouches-du-R. (Intérieur)", -5, 1750],
+        "14": ["Calvados", -7, 2450], "15": ["Cantal", -8, 3100], "16": ["Charente", -5, 2150],
+        "17L": ["17 - Charente-Marit. (Littoral)", -4, 1950], "17I": ["17 - Charente-Marit. (Intérieur)", -5, 2150],
+        "18": ["Cher", -6, 2450], "19": ["Corrèze", -7, 2500], "2A": ["Corse-du-Sud", -2, 1100], "2B": ["Haute-Corse", -2, 1200],
+        "21": ["Côte-d'Or", -7, 2700], "22": ["Côtes-d'Armor", -4, 2250], "23": ["Creuse", -7, 2750], "24": ["Dordogne", -5, 2200], "25": ["Doubs", -10, 3100], "26": ["Drôme", -8, 2200], "27": ["Eure", -6, 2600], "28": ["Eure-et-Loir", -6, 2600],
+        "29L": ["29 - Finistère (Littoral)", -4, 2100], "29I": ["29 - Finistère (Intérieur)", -5, 2350],
+        "30": ["Gard", -5, 1650], "31": ["Haute-Garonne", -5, 2050], "32": ["Gers", -5, 2100],
+        "33L": ["33 - Gironde (Littoral)", -3, 1900], "33I": ["33 - Gironde (Intérieur)", -4, 2100],
+        "34L": ["34 - Hérault (Littoral)", -3, 1450], "34I": ["34 - Hérault (Intérieur)", -5, 1700],
+        "35": ["Ille-et-Vilaine", -4, 2350], "36": ["Indre", -6, 2400], "37": ["Indre-et-Loire", -6, 2350], "38": ["Isère", -8, 2700], "39": ["Jura", -10, 2950], "40": ["Landes", -4, 1900], "41": ["Loir-et-Cher", -6, 2500], "42": ["Loire", -8, 2700], "43": ["Haute-Loire", -8, 3000],
+        "44L": ["44 - Loire-Atlantique (Littoral)", -4, 2200], "44I": ["44 - Loire-Atlantique (Intérieur)", -5, 2400],
+        "45": ["Loiret", -6, 2550], "46": ["Lot", -7, 2300], "47": ["Lot-et-Garonne", -5, 2050], "48": ["Lozère", -8, 3100], "49": ["Maine-et-Loire", -6, 2300], "50": ["Manche", -4, 2250], "51": ["Marne", -7, 2700], "52": ["Haute-Marne", -9, 2850], "53": ["Mayenne", -7, 2500], "54": ["Meurthe-et-M.", -8, 2850], "55": ["Meuse", -8, 2850], "56": ["Morbihan", -4, 2150], "57": ["Moselle", -9, 2900], "58": ["Nièvre", -7, 2650], "59": ["Nord", -5, 2650], "60": ["Oise", -6, 2700], "61": ["Orne", -7, 2650], "62": ["Pas-de-Calais", -5, 2600], "63": ["Puy-de-Dôme", -7, 2700], "64": ["Pyrénées-Atl.", -4, 1950], "65": ["Hautes-Pyr.", -5, 2100], "66": ["Pyrénées-Or.", -5, 1600], "67": ["Bas-Rhin", -9, 2750], "68": ["Haut-Rhin", -9, 2800], "69": ["Rhône", -7, 2500], "70": ["Haute-Saône", -8, 2800], "71": ["Saône-et-Loire", -8, 2650], "72": ["Sarthe", -6, 2450], "73": ["Savoie", -8, 2900], "74": ["Haute-Savoie", -8, 3100], "75": ["Paris", -7, 2400], "76": ["Seine-Marit.", -6, 2550], "77": ["Seine-et-Marne", -7, 2550], "78": ["Yvelines", -7, 2500], "79": ["Deux-Sèvres", -4, 2200], "80": ["Somme", -6, 2700], "81": ["Tarn", -6, 2150], "82": ["Tarn-et-Garonne", -6, 2100],
+        "83L": ["83 - Var (Littoral)", -2, 1400], "83I": ["83 - Var (Intérieur)", -5, 1800],
+        "84": ["Vaucluse", -5, 1850], "85": ["Vendée", -4, 2100], "86": ["Vienne", -7, 2350], "87": ["Haute-Vienne", -7, 2600], "88": ["Vosges", -9, 3100], "89": ["Yonne", -7, 2650], "90": ["Terr-de-Belfort", -9, 2900], "91": ["Essonne", -6, 2500], "92": ["Hauts-de-Seine", -7, 2400], "93": ["Seine-St-Denis", -7, 2450], "94": ["Val-de-Marne", -7, 2450], "95": ["Val-d'Oise", -6, 2550]
+    };
+
+    function init() {
+        const sel = document.getElementById('departement');
+        const codes = Object.keys(dataClimat).sort();
+        codes.forEach(code => {
+            let opt = document.createElement('option');
+            opt.value = code;
+            opt.innerText = (code.length > 2) ? dataClimat[code][0] : code + " - " + dataClimat[code][0];
+            if(code == "69") opt.selected = true;
+            sel.appendChild(opt);
+        });
+        calculerGlobal();
+    }
+
+    function calculerGlobal() {
+        const surface = parseFloat(document.getElementById('surface').value) || 0;
+        const hsp = parseFloat(document.getElementById('hsp').value) || 2.5;
+        const G = parseFloat(document.getElementById('coeffG').value);
+        const tInt = parseFloat(document.getElementById('tInt').value);
+        const alt = parseFloat(document.getElementById('altitude').value) || 0;
+        
+        const depCode = document.getElementById('departement').value;
+        const tExtBase = dataClimat[depCode][1];
+        const dju = dataClimat[depCode][2];
+
+        // LOGIQUE ALTITUDE
+        let correctionAlt = 0;
+        if (alt > 200) {
+            if (alt <= 600) correctionAlt = (alt - 200) / 100;
+            else if (alt <= 1000) correctionAlt = 4 + ((alt - 600) / 100) * 1.5;
+            else correctionAlt = 10 + ((alt - 1000) / 100) * 2;
+        }
+
+        const tExtFinale = tExtBase - correctionAlt;
+        const deltaT = tInt - tExtFinale;
+
+        // PUISSANCE
+        const volume = surface * hsp;
+        const puissance = volume * G * deltaT;
+
+        // BESOIN
+        let besoin = 0;
+        if (deltaT > 0) {
+            besoin = (volume * G * 24 * dju) / 1000;
+        }
+
+        // AFFICHAGE
+        document.getElementById('displayTextBase').innerText = tExtBase;
+        document.getElementById('tExtCorrigee').innerText = tExtFinale.toFixed(1);
+        document.getElementById('displayDJU').innerText = dju;
+        document.getElementById('puissanceWatts').innerText = Math.round(puissance).toLocaleString('fr-FR');
+        document.getElementById('puissanceKw').innerText = (puissance/1000).toFixed(1);
+        document.getElementById('besoinAnnuel').innerText = Math.round(besoin).toLocaleString('fr-FR');
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
