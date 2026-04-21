@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculateur Déperdition - Stove Industry</title>
+    <style>
+        :root {
+            --stove-red: #c0392b; 
+            --stove-dark: #2c3e50;
+            --stove-light: #f4f4f4;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--stove-light); 
+            padding: 20px; 
+            color: #333; 
+        }
+
+        .container { 
+            max-width: 1000px; 
+            margin: auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-stove {
+            max-width: 280px; 
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        h1 { 
+            color: var(--stove-red); 
+            text-align: center; 
+            border-bottom: 2px solid var(--stove-red); 
+            padding-bottom: 15px;
+            margin-top: 10px;
+            font-size: 1.8em;
+        }
+
+        .client-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px dashed #ccc;
+        }
+
+        .grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 30px; 
+            margin-top: 10px; 
+        }
+
+        .col { 
+            padding: 20px; 
+            background: #ffffff; 
+            border-radius: 8px; 
+            border: 1px solid #e0e0e0; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        h3 { 
+            color: var(--stove-dark); 
+            margin-top: 0; 
+            border-left: 4px solid var(--stove-red); 
+            padding-left: 12px; 
+            margin-bottom: 20px;
+        }
+
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            font-size: 0.9em; 
+        }
+
+        input, select { 
+            width: 100%; 
+            padding: 10px; 
+            margin-bottom: 15px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            box-sizing: border-box; 
+            font-size: 1em;
+        }
+
+        .result-box { 
+            background: var(--stove-dark); 
+            color: white; 
+            padding: 25px; 
+            text-align: center; 
+            font-size: 1.6em; 
+            border-radius: 8px; 
+            margin-top: 30px; 
+            border-bottom: 5px solid var(--stove-red); 
+        }
+
+        .btn-print {
+            display: block;
+            width: 280px;
+            margin: 20px auto 0 auto;
+            padding: 15px;
+            background-color: var(--stove-red);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background 0.3s;
+        }
+
+        .btn-print:hover {
+            background-color: #a93226;
+        }
+
+        footer {
+            text-align: center; 
+            color: #7f8c8d; 
+            font-size: 0.8em; 
+            margin-top: 30px;
+            line-height: 1.5;
+        }
+
+        .highlight { color: var(--stove-red); font-weight: bold; }
+        .info { font-size: 0.85em; color: #7f8c8d; margin-top: -10px; margin-bottom: 15px; display: block; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+            .btn-print, footer br { display: none; }
+            .client-info { border: 1px solid #eee; background: white; }
+            .col { border: 1px solid #eee; box-shadow: none; }
+            input, select { border: none !important; appearance: none; background: none; font-weight: bold; padding: 5px 0; }
+            h1 { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <img src="https://www.interstoves.fr/img/logo-1767943104.jpg" alt="Logo" class="logo-stove">
+        <h1>Note de Dimensionnement Thermique (NF EN 12831)</h1>
+    </div>
+
+    <div class="client-info">
+        <div>
+            <label>Nom du Client / Référence Dossier</label>
+            <input type="text" id="nomClient" placeholder="Ex: M. Jean Dupont">
+        </div>
+        <div>
+            <label>Adresse de l'installation</label>
+            <input type="text" id="adresseClient" placeholder="Ex: 12 rue des Alpes, 73000 Chambéry">
+        </div>
+    </div>
+    
+    <div class="grid">
+        <div class="col">
+            <h3>1. Volume à chauffer (V)</h3>
+            <label>Surface au sol (m²)</label>
+            <input type="number" id="surface" placeholder="Ex: 50" oninput="calculerTotal()">
+            
+            <label>Hauteur sous plafond (m)</label>
+            <input type="number" id="hauteur" value="2.5" step="0.1" oninput="calculerTotal()">
+            <span class="info">Volume total : <b id="displayVolume" class="highlight">0</b> m³</span>
+
+            <h3>2. Isolation (Coefficient G)</h3>
+            <label>Niveau d'isolation du logement</label>
+            <select id="coeffG" onchange="calculerTotal()">
+                <option value="0.5">0.5 - Très Haute Performance (RE2020 / BBC)</option>
+                <option value="0.8">0.8 - RT2012 (Très bien isolé)</option>
+                <option value="1.0">1.0 - RT2000 / RT2005 (Isolé)</option>
+                <option value="1.2" selected>1.2 - Années 80-90 (Isolation moyenne)</option>
+                <option value="1.5">1.5 - Ancien (Murs isolés, combles peu isolés)</option>
+                <option value="1.8">1.8 - Non isolé (Simple vitrage / Pierre)</option>
+                <option value="2.1">2.1 - Passoire thermique totale</option>
+            </select>
+        </div>
+
+        <div class="col">
+            <h3>3. Températures & Localisation</h3>
+            <label>Température intérieure souhaitée (°C)</label>
+            <input type="number" id="tInt" value="20" oninput="calculerTotal()">
+
+            <label>Département (Température de base)</label>
+            <select id="tExtBase" onchange="calculerTotal()">
+                <option value="-4">01 - Ain (-4°C)</option><option value="-7">02 - Aisne (-7°C)</option><option value="-7">03 - Allier (-7°C)</option><option value="-8">04 - Alpes-H-P (-8°C)</option><option value="-8">05 - Hautes-Alpes (-8°C)</option><option value="-5">06 - Alpes-Marit. (-5°C)</option><option value="-7">07 - Ardèche (-7°C)</option><option value="-8">08 - Ardennes (-8°C)</option><option value="-6">09 - Ariège (-6°C)</option><option value="-7">10 - Aube (-7°C)</option><option value="-5">11 - Aude (-5°C)</option><option value="-8">12 - Aveyron (-8°C)</option><option value="-5">13 - Bouches-du-R. (-5°C)</option><option value="-7">14 - Calvados (-7°C)</option><option value="-8">15 - Cantal (-8°C)</option><option value="-5">16 - Charente (-5°C)</option><option value="-4">17 - Charente-Marit. (-4°C)</option><option value="-6">18 - Cher (-6°C)</option><option value="-7">19 - Corrèze (-7°C)</option><option value="-7" selected>21 - Côte-d'Or (-7°C)</option><option value="-4">22 - Côtes-d'Armor (-4°C)</option><option value="-7">23 - Creuse (-7°C)</option><option value="-5">24 - Dordogne (-5°C)</option><option value="-10">25 - Doubs (-10°C)</option><option value="-8">26 - Drôme (-8°C)</option><option value="-6">27 - Eure (-6°C)</option><option value="-6">28 - Eure-et-Loir (-6°C)</option><option value="-4">29 - Finistère (-4°C)</option><option value="-5">30 - Gard (-5°C)</option><option value="-5">31 - Haute-Garonne (-5°C)</option><option value="-5">32 - Gers (-5°C)</option><option value="-4">33 - Gironde (-4°C)</option><option value="-5">34 - Hérault (-5°C)</option><option value="-4">35 - Ille-et-Vilaine (-4°C)</option><option value="-6">36 - Indre (-6°C)</option><option value="-6">37 - Indre-et-Loire (-6°C)</option><option value="-8">38 - Isère (-8°C)</option><option value="-10">39 - Jura (-10°C)</option><option value="-4">40 - Landes (-4°C)</option><option value="-6">41 - Loir-et-Cher (-6°C)</option><option value="-8">42 - Loire (-8°C)</option><option value="-8">43 - Haute-Loire (-8°C)</option><option value="-4">44 - Loire-Atlantique (-4°C)</option><option value="-6">45 - Loiret (-6°C)</option><option value="-7">46 - Lot (-7°C)</option><option value="-5">47 - Lot-et-Garonne (-5°C)</option><option value="-8">48 - Lozère (-8°C)</option><option value="-6">49 - Maine-et-Loire (-6°C)</option><option value="-4">50 - Manche (-4°C)</option><option value="-7">51 - Marne (-7°C)</option><option value="-9">52 - Haute-Marne (-9°C)</option><option value="-7">53 - Mayenne (-7°C)</option><option value="-8">54 - Meurthe-et-M. (-8°C)</option><option value="-8">55 - Meuse (-8°C)</option><option value="-4">56 - Morbihan (-4°C)</option><option value="-9">57 - Moselle (-9°C)</option><option value="-7">58 - Nièvre (-7°C)</option><option value="-5">59 - Nord (-5°C)</option><option value="-6">60 - Oise (-6°C)</option><option value="-7">61 - Orne (-7°C)</option><option value="-5">62 - Pas-de-Calais (-5°C)</option><option value="-7">63 - Puy-de-Dôme (-7°C)</option><option value="-4">64 - Pyrénées-Atl. (-4°C)</option><option value="-5">65 - Hautes-Pyr. (-5°C)</option><option value="-5">66 - Pyrénées-Or. (-5°C)</option><option value="-9">67 - Bas-Rhin (-9°C)</option><option value="-9">68 - Haut-Rhin (-9°C)</option><option value="-7">69 - Rhône (-7°C)</option><option value="-8">70 - Haute-Saône (-8°C)</option><option value="-8">71 - Saône-et-Loire (-8°C)</option><option value="-6">72 - Sarthe (-6°C)</option><option value="-8">73 - Savoie (-8°C)</option><option value="-8">74 - Haute-Savoie (-8°C)</option><option value="-7">75 - Paris (-7°C)</option><option value="-6">76 - Seine-Marit. (-6°C)</option><option value="-7">77 - Seine-et-Marne (-7°C)</option><option value="-7">78 - Yvelines (-7°C)</option><option value="-4">79 - Deux-Sèvres (-4°C)</option><option value="-6">80 - Somme (-6°C)</option><option value="-6">81 - Tarn (-6°C)</option><option value="-6">82 - Tarn-et-Garonne (-6°C)</option><option value="-5">83 - Var (-5°C)</option><option value="-5">84 - Vaucluse (-5°C)</option><option value="-4">85 - Vendée (-4°C)</option><option value="-7">86 - Vienne (-7°C)</option><option value="-7">87 - Haute-Vienne (-7°C)</option><option value="-9">88 - Vosges (-9°C)</option><option value="-7">89 - Yonne (-7°C)</option><option value="-9">90 - Terr. de Belfort (-9°C)</option><option value="-6">91 - Essonne (-6°C)</option><option value="-7">92 - Hauts-de-Seine (-7°C)</option><option value="-7">93 - Seine-St-Denis (-7°C)</option><option value="-7">94 - Val-de-Marne (-7°C)</option><option value="-6">95 - Val-d'Oise (-6°C)</option>
+            </select>
+
+            <label>Altitude de la commune (m)</label>
+            <select id="altitude" onchange="calculerTotal()">
+                <option value="0">0 - 200m</option>
+                <option value="300">300m</option>
+                <option value="400">400m</option>
+                <option value="500">500m</option>
+                <option value="600">600m</option>
+                <option value="700">700m</option>
+                <option value="800">800m</option>
+                <option value="900">900m</option>
+                <option value="1000">1000m</option>
+                <option value="1100">1100m</option>
+                <option value="1200">1200m</option>
+                <option value="1300">1300m</option>
+                <option value="1400">1400m</option>
+                <option value="1500">1500m</option>
+            </select>
+            <span class="info">Température ext. corrigée : <b id="tExtCorrigee" class="highlight">0</b> °C</span>
+        </div>
+    </div>
+
+    <div class="result-box">
+        Puissance de déperdition brute : <span id="resultat">0</span> Watts
+        <br>
+        <span style="font-size: 0.7em;">Puissance nominale conseillée : <span id="resultatKW" style="color: white; font-weight: bold;">0</span> kW</span>
+    </div>
+
+    <button class="btn-print" onclick="window.print()">Exporter en PDF / Imprimer Rapport</button>
+    
+    <footer>
+        © Stove Industry - Document de dimensionnement à titre informatif.<br>
+        Méthode NF EN 12831. Correction Altitude : 200-600m (1°/100m), 600-1000m (1.5°/100m), >1000m (2°/100m).
+    </footer>
+</div>
+
+<script>
+    function calculerTotal() {
+        const surface = parseFloat(document.getElementById('surface').value) || 0;
+        const hauteur = parseFloat(document.getElementById('hauteur').value) || 0;
+        const V = surface * hauteur;
+        document.getElementById('displayVolume').innerText = V.toFixed(1);
+
+        const G = parseFloat(document.getElementById('coeffG').value);
+        const tInt = parseFloat(document.getElementById('tInt').value);
+        const tExtBase = parseFloat(document.getElementById('tExtBase').value);
+        const alt = parseInt(document.getElementById('altitude').value);
+
+        let correctionAlt = 0;
+        if (alt > 200) {
+            if (alt <= 600) correctionAlt = (alt - 200) / 100;
+            else if (alt <= 1000) correctionAlt = 4 + ((alt - 600) / 100) * 1.5;
+            else correctionAlt = 10 + ((alt - 1000) / 100) * 2;
+        }
+        
+        const tExtFinale = tExtBase - correctionAlt;
+        document.getElementById('tExtCorrigee').innerText = tExtFinale.toFixed(1);
+
+        if (V > 0) {
+            const deltaT = tInt - tExtFinale;
+            const puissance = V * G * deltaT;
+            document.getElementById('resultat').innerText = Math.round(puissance);
+            document.getElementById('resultatKW').innerText = (puissance / 1000).toFixed(1);
+        } else {
+            document.getElementById('resultat').innerText = "0";
+            document.getElementById('resultatKW').innerText = "0";
+        }
+    }
+    window.onload = calculerTotal;
+</script>
+
+</body>
+</html>
