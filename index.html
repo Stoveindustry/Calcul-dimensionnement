@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Note de Dimensionnement Thermique Expert - Interstoves</title>
+    <style>
+        :root {
+            --stove-red: #c0392b; 
+            --stove-dark: #2c3e50;
+            --stove-light: #f4f4f4;
+            --accent-gold: #f1c40f;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--stove-light); padding: 20px; color: #333; line-height: 1.5; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid var(--stove-red); padding-bottom: 20px; }
+        .logo-stove { max-width: 250px; margin-bottom: 10px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 20px; }
+        .col { padding: 20px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; }
+        .col-full { grid-column: span 2; background: #fdfdfd; border: 1px solid var(--stove-red); }
+        
+        h3 { color: var(--stove-dark); border-left: 4px solid var(--stove-red); padding-left: 12px; margin-bottom: 15px; font-size: 1.1em; text-transform: uppercase; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85em; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 1em; }
+
+        .result-box { background: var(--stove-dark); color: white; padding: 25px; text-align: center; border-radius: 8px; margin-top: 20px; }
+        .result-main { font-size: 2.2em; font-weight: bold; color: var(--accent-gold); }
+
+        .simulation-annuelle { margin-top: 25px; padding: 20px; background: #fff5f5; border-radius: 8px; border: 1px solid var(--stove-red); }
+        .highlight-annuel { font-size: 1.8em; color: var(--stove-red); font-weight: bold; }
+        
+        .info-bulle { font-size: 0.82em; color: #666; background: #f0f0f0; padding: 12px; border-radius: 4px; margin-top: 10px; display: block; line-height: 1.4; }
+        .note-juridique { font-size: 0.82em; color: #7f8c8d; font-style: italic; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd; }
+
+        .btn-print { width:100%; padding:15px; background:var(--stove-red); color:white; border:none; border-radius:5px; margin-top:20px; cursor:pointer; font-weight:bold; font-size: 1.1em; transition: 0.3s; }
+        .btn-print:hover { background: #a93226; }
+
+        @media print {
+            .btn-print { display: none; }
+            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0; }
+            body { background: white; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <img src="https://www.interstoves.fr/img/logo-1767943104.jpg" alt="Logo Interstoves" class="logo-stove">
+        <h1>Note de Dimensionnement Thermique</h1>
+    </div>
+
+    <div class="grid">
+        <div class="col col-full">
+            <h3>Informations Dossier Client</h3>
+            <div style="display: flex; gap: 20px;">
+                <div style="flex: 1;">
+                    <label>Nom du Client</label>
+                    <input type="text" id="nomClient" placeholder="Ex: M. Martin Jean">
+                </div>
+                <div style="flex: 2;">
+                    <label>Adresse du chantier</label>
+                    <input type="text" id="adresseClient" placeholder="Ex: 12 rue des lilas, 83000 Toulon">
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <h3>1. Caractéristiques Logement</h3>
+            <label>Surface habitable (m²)</label>
+            <input type="number" id="surface" value="100" oninput="calculerGlobal()">
+            
+            <label>Hauteur sous plafond (m)</label>
+            <input type="number" id="hsp" value="2.5" step="0.1" oninput="calculerGlobal()">
+
+            <label>Niveau d'isolation (Coefficient G)</label>
+            <select id="coeffG" onchange="calculerGlobal()">
+                <option value="0.4">0.4 - RE2020 / Maison Passive</option>
+                <option value="0.6" selected>0.6 - RT2012 / Très isolé</option>
+                <option value="0.8">0.8 - RT2005 / RT2000 (Isolé)</option>
+                <option value="1.2">1.2 - Années 90 / Moyen</option>
+                <option value="1.5">1.5 - Années 80 (Peu isolé)</option>
+                <option value="1.9">1.9 - Ancien (Non isolé)</option>
+            </select>
+        </div>
+
+        <div class="col">
+            <h3>2. Localisation & Consigne</h3>
+            <label>Département / Zone</label>
+            <select id="departement" onchange="calculerGlobal()"></select>
+            
+            <label>Altitude du chantier (m)</label>
+            <select id="altitude" onchange="calculerGlobal()">
+                <option value="0">0 - 200 m</option>
+                <option value="400">400 m</option>
+                <option value="600">600 m</option>
+                <option value="800">800 m</option>
+                <option value="1000">1000 m</option>
+            </select>
+
+            <label>Température intérieure souhaitée (°C)</label>
+            <input type="number" id="tInt" value="19" oninput="calculerGlobal()">
+            
+            <div class="info-bulle">
+                <b>Analyse climatique locale :</b><br>
+                T° Base : <span id="displayTextBase">-</span>°C | T° Corrigée (Altitude) : <span id="tExtCorrigee">-</span>°C<br>
+                DJU Base (18°C) : <span id="displayDJU">-</span> | <b>DJU Corrigés : <span id="djuFinal">-</span></b>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-box">
+        Puissance de déperdition (T<sub>ext</sub> min) : <span class="result-main" id="puissanceWatts">0</span> Watts
+        <div style="font-size: 1.1em; opacity: 0.9; margin-top: 10px;">
+            Préconisation Puissance Nominale : <span id="puissanceKw" style="font-weight: bold; color: var(--accent-gold);">0</span> kW
+        </div>
+    </div>
+
+    <div class="simulation-annuelle">
+        <h3>Besoin Énergétique Annuel Estimé</h3>
+        <p>Énergie totale nécessaire pour le chauffage sur une saison complète (Calcul dynamique) :</p>
+        <span class="highlight-annuel" id="besoinAnnuel">0</span> <span class="highlight-annuel"> kWh / an</span>
+        
+        <p class="note-juridique">
+            <b>Note technique :</b> Ce calcul utilise la méthode des DJU corrigés. Il prend en compte l'impact réel de votre consigne de température intérieure ainsi que le durcissement climatique lié à l'altitude (+7% de besoin par tranche de 100m au-delà de 200m).
+        </p>
+    </div>
+
+    <button class="btn-print" onclick="window.print()">Imprimer la Note Technique</button>
+</div>
+
+<script>
+    const dataClimat = {
+        "01": ["01 - Ain", -4, 2600], "02": ["02 - Aisne", -7, 2750], "03": ["03 - Allier", -7, 2550], "04": ["04 - Alpes-H-P", -8, 2400], "05": ["05 - Hautes-Alpes", -8, 3000],
+        "06L": ["06 - Alpes-M. (Littoral)", -2, 1350], "06I": ["06 - Alpes-M. (Intérieur)", -5, 1850],
+        "13L": ["13 - BDR (Littoral)", -2, 1450], "13I": ["13 - BDR (Intérieur)", -5, 1750],
+        "14L": ["14 - Calvados (Littoral)", -4, 2350], "14I": ["14 - Calvados (Intérieur)", -7, 2600],
+        "83L": ["83 - Var (Littoral)", -2, 1400], "83I": ["83 - Var (Intérieur)", -5, 1800]
+        // Vous pouvez rajouter les autres départements ici si besoin
+    };
+
+    function init() {
+        const sel = document.getElementById('departement');
+        Object.keys(dataClimat).sort().forEach(code => {
+            let opt = document.createElement('option');
+            opt.value = code;
+            opt.innerText = dataClimat[code][0];
+            if(code == "83I") opt.selected = true;
+            sel.appendChild(opt);
+        });
+        calculerGlobal();
+    }
+
+    function calculerGlobal() {
+        const surface = parseFloat(document.getElementById('surface').value) || 0;
+        const hsp = parseFloat(document.getElementById('hsp').value) || 2.5;
+        const G = parseFloat(document.getElementById('coeffG').value);
+        const tInt = parseFloat(document.getElementById('tInt').value);
+        const alt = parseFloat(document.getElementById('altitude').value) || 0;
+        const depCode = document.getElementById('departement').value;
+        
+        const tExtBase = dataClimat[depCode][1];
+        const djuBase = dataClimat[depCode][2];
+        const volume = surface * hsp;
+
+        // 1. CALCUL PUISSANCE AVEC CORRECTION ALTITUDE
+        let correctionAlt = 0;
+        if (alt > 200) {
+            if (alt <= 600) correctionAlt = (alt - 200) / 100;
+            else if (alt <= 1000) correctionAlt = 4 + ((alt - 600) / 100) * 1.5;
+            else correctionAlt = 10 + ((alt - 1000) / 100) * 2;
+        }
+
+        const tExtFinale = tExtBase - correctionAlt;
+        const puissance = volume * G * (tInt - tExtFinale);
+
+        // 2. CALCUL BESOIN ANNUEL AVEC DJU CORRIGÉS
+        // On ajuste la base 18°C du DJU à la température intérieure réelle (sur ~232 jours de chauffe)
+        let djuCorrConsigne = djuBase + (tInt - 18) * 232; 
+        
+        // Correction altitude sur DJU (+7% par tranche de 100m au dessus de 200m)
+        let djuFinal = djuCorrConsigne;
+        if (alt > 200) {
+            let tranches = (alt - 200) / 100;
+            djuFinal = djuCorrConsigne * (1 + (tranches * 0.07));
+        }
+
+        const besoinAnnuel = (volume * G * 24 * djuFinal) / 1000;
+
+        // Mise à jour de l'affichage
+        document.getElementById('displayTextBase').innerText = tExtBase;
+        document.getElementById('tExtCorrigee').innerText = tExtFinale.toFixed(1);
+        document.getElementById('displayDJU').innerText = djuBase;
+        document.getElementById('djuFinal').innerText = Math.round(djuFinal);
+        document.getElementById('puissanceWatts').innerText = Math.round(puissance).toLocaleString('fr-FR');
+        document.getElementById('puissanceKw').innerText = (puissance/1000).toFixed(1);
+        document.getElementById('besoinAnnuel').innerText = Math.round(besoinAnnuel).toLocaleString('fr-FR');
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
